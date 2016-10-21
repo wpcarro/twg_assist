@@ -19,10 +19,10 @@ app = Flask(__name__)
 DEBUG = True
 
 supported_actions = {
-    'find': handle_find,
-    'filter': handle_filter,
-    'download': handle_download,
-    'show': handle_show
+    '.find': handle_find,
+    '.filter': handle_filter,
+    '.download': handle_download,
+    '.show': handle_show
 }
 
 
@@ -43,36 +43,27 @@ def webhook():
     return r
 
 
-def get_action(req):
-    return req.get('result').get('')
-
-
 def process_request(req):
-    params = req.get('result').get('parameters')
-    query = params.get('any')
+    action = supported_actions.get(req.get('result').get('action'))
+    action_res = action(req)
 
-    action = get_action(req)
-
-    data = handle_find(query)
-    nugget_text, nugget_url = mine_data(data)
-
-    return curate_webhook_response(nugget_text, nugget_url)
+    return curate_webhook_response(action_res)
 
 
-def curate_webhook_response(nugget_text, nugget_url):
+def curate_webhook_response(data):
     payload = {
-        'speech': nugget_text,
-        'displayText': nugget_text,
+        'speech': data,
+        'displayText': data,
         'data': {
-            'slack': nugget_text
+            'slack': data
         },
         'contextOut': [
             {
                 'name': 'nugget',
                 'lifespan': 5,
                 'parameters': {
-                    'nugget_text': nugget_text,
-                    'nugget_url': nugget_url
+                    'nugget_text': data,
+                    'nugget_url': data
                 }
             }
         ],
